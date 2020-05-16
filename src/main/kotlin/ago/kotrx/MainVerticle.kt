@@ -18,8 +18,11 @@ import java.time.Duration
 class MainVerticle : AbstractVerticle() {
 
   private fun controller(): Router {
+    val routerW = Router.router(vertx)
+    routerW.get("/:city").handler(this::handleWeather)
+
     val router = Router.router(vertx)
-    router.get("/weather/:city").handler(this::handleWeather)
+    router.mountSubRouter("/weather", routerW)
     router.get().handler(this::handleIt)
     router.route().handler(BodyHandler.create())
 
@@ -45,7 +48,7 @@ class MainVerticle : AbstractVerticle() {
         .just(routingContext.request().absoluteURI())
         .subscribeOn(Schedulers.io())
         .map {
-          Resp()
+          DefaultResp()
         }
     )
   }
@@ -107,4 +110,4 @@ class MainVerticle : AbstractVerticle() {
 
 }
 
-data class Resp(val text: String = "hello", val time: Long = System.currentTimeMillis())
+data class DefaultResp(val text: String = "hello", val time: Long = System.currentTimeMillis())
