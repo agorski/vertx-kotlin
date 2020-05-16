@@ -20,10 +20,9 @@ ext {
 }
 
 application {
-  mainClassName = 'io.vertx.core.Launcher'
+  mainClassName = 'ago.kotrx.AppKt'
 }
 
-def mainVerticleName = 'ago.kotrx.MainVerticle'
 def watchForChange = 'src/**/*'
 def doOnChange = './gradlew classes'
 
@@ -52,9 +51,8 @@ compileTestKotlin {
 
 shadowJar {
   classifier = 'fat'
-
   manifest {
-    attributes 'Main-Verticle': mainVerticleName
+    attributes 'Main-Class': mainClassName
   }
   mergeServiceFiles {
     include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
@@ -69,5 +67,5 @@ test {
 }
 
 run {
-  args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
+  args = ['run',  "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
 }

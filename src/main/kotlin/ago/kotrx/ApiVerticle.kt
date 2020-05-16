@@ -10,7 +10,7 @@ import io.vertx.reactivex.ext.web.Router
 import io.vertx.reactivex.ext.web.RoutingContext
 import io.vertx.reactivex.ext.web.handler.BodyHandler
 
-class MainVerticle() : AbstractVerticle() {
+class ApiVerticle() : AbstractVerticle() {
 
   private fun controller(subRouters: Map<String, Router>): Router {
     val router = Router.router(vertx)
