@@ -16,7 +16,7 @@ ext {
   kotlinVersion = '1.3.72'
   vertxVersion = '3.9.0'
   junitJupiterEngineVersion = '5.6.0'
-  arrowVersion = "0.10.5"
+  koinVersion = "2.1.5"
 }
 
 application {
@@ -35,10 +35,13 @@ dependencies {
   implementation "io.vertx:vertx-lang-kotlin-coroutines:$vertxVersion"
   implementation "io.vertx:vertx-lang-kotlin:$vertxVersion"
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-  implementation "io.arrow-kt:arrow-core:$arrowVersion"
+  implementation "org.koin:koin-core:$koinVersion"
+
+  // Testing
   testImplementation "io.vertx:vertx-junit5:$vertxVersion"
   testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitJupiterEngineVersion"
   testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterEngineVersion"
+  testImplementation "org.koin:koin-test:$koinVersion"
 }
 
 compileKotlin {

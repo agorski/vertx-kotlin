@@ -13,12 +13,10 @@ import io.vertx.reactivex.ext.web.client.HttpResponse
 import io.vertx.reactivex.ext.web.client.WebClient
 import java.time.Duration
 
-class Weather(private val vertx: Vertx) {
+class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx) {
   companion object {
     const val endpoint = "/weather"
   }
-
-  private val weatherLogic = WeatherClient(vertx)
 
   fun routers(): Router {
     val router = Router.router(vertx)
@@ -29,16 +27,14 @@ class Weather(private val vertx: Vertx) {
   private fun weatherForCity(routingContext: RoutingContext) {
     ResponseMaker.sendResponse(
       routingContext,
-      weatherLogic.weatherForCity(
+      weatherClient.weatherForCity(
         routingContext.request().getParam("city")
       )
     )
   }
-
 }
 
-class WeatherClient(vertx: Vertx) {
-  private val webClient = WebClient.create(vertx)
+class WeatherClient(private val webClient: WebClient) {
 
   fun weatherForCity(city: String): Single<JsonObject> {
     return webClient["www.metaweather.com", "/api/location/search/?query=" + city]

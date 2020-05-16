@@ -9,8 +9,11 @@ import io.vertx.reactivex.core.AbstractVerticle
 import io.vertx.reactivex.ext.web.Router
 import io.vertx.reactivex.ext.web.RoutingContext
 import io.vertx.reactivex.ext.web.handler.BodyHandler
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
-class ApiVerticle() : AbstractVerticle() {
+class ApiVerticle() : AbstractVerticle(), KoinComponent {
+  private val weather by inject<Weather>()
 
   private fun controller(subRouters: Map<String, Router>): Router {
     val router = Router.router(vertx)
@@ -28,7 +31,6 @@ class ApiVerticle() : AbstractVerticle() {
   }
 
   override fun start(startPromise: Promise<Void>) {
-    val weather = Weather(vertx)
 
     val routers = mapOf(
       Weather.endpoint to weather.routers()
