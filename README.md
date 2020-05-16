@@ -36,3 +36,15 @@ http "127.0.0.1:8888/weather/berlin"
 http "127.0.0.1:8888/weather/paris"
 ```
 
+# Self contained jar
+build
+```
+./gradlew shadowJar
+
+```
+run
+```
+java -jar kotrx-1.0.0-SNAPSHOT-fat.jar
+```
+
+
