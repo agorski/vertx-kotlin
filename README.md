@@ -1,6 +1,15 @@
+Sample reactive vert.x app with kotlin and RxJava2.
+
+To do:
+1. DI with koin
+https://start.insert-koin.io/#/
+
+2.
+
 # Run server
 
 server runs on *port 8888*
+
 ```./gradlew run```
 
 # Stress test
