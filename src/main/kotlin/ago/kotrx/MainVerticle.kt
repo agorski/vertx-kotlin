@@ -11,39 +11,49 @@ import io.vertx.reactivex.ext.web.RoutingContext
 import io.vertx.reactivex.ext.web.handler.BodyHandler
 
 class MainVerticle() : AbstractVerticle() {
-  private val weather = lazy { Weather(vertx) }
 
-  private fun controller(): Router {
+  private fun controller(subRouters: Map<String, Router>): Router {
     val router = Router.router(vertx)
-    router.mountSubRouter("/weather", weather.value.controller())
-    router.get().handler(this::handleIt)
+
+    // add sub routers
+    subRouters.forEach { (path, routerForThePath) ->
+      router.mountSubRouter(path, routerForThePath)
+    }
+
+    // default handler for other requests
+    router.route("/").handler(this::defaultEndpoint)
     router.route().handler(BodyHandler.create())
 
     return router
   }
 
   override fun start(startPromise: Promise<Void>) {
+    val weather = Weather(vertx)
+
+    val routers = mapOf(
+      Weather.endpoint to weather.routers()
+    )
     val options = HttpServerOptions()
       .setLogActivity(true)
     vertx
       .createHttpServer(options)
-      .requestHandler(controller())
+      .requestHandler(controller(routers))
       .rxListen(8888)
       .ignoreElement()
       .subscribe(startPromise::complete, startPromise::fail)
   }
 
-  private fun handleIt(routingContext: RoutingContext) {
+  private fun defaultEndpoint(routingContext: RoutingContext) {
     ResponseMaker.sendResponse(
       routingContext,
       Single
         .just(routingContext.request().absoluteURI())
         .subscribeOn(Schedulers.io())
         .map {
-          DefaultResp()
+          DefaultResponse()
         }
     )
   }
 }
 
-data class DefaultResp(val text: String = "hello", val time: Long = System.currentTimeMillis())
+data class DefaultResponse(val text: String = "hello", val time: Long = System.currentTimeMillis())
