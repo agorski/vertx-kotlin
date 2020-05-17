@@ -19,6 +19,7 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
   }
 
   fun routers(): Router {
+
     val router = Router.router(vertx)
     router.get("/:city").handler(this::weatherForCity)
     return router
@@ -34,20 +35,28 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
   }
 }
 
-class WeatherClient(private val webClient: WebClient) {
+
+class WeatherClient(private val webClient: WebClient, private val config: JsonObject) {
+  private val configApi = config.getJsonObject("api_weather")
+  private val url = configApi.getString("url")
+  private val timeoutInSec = Duration.ofSeconds(configApi.getLong("timeout")).toMillis()
+  private val queryLocation = configApi.getString("q_location")
+  private val queryWeather = configApi.getString("q_weather")
+
 
   fun weatherForCity(city: String): Single<JsonObject> {
-    return webClient["www.metaweather.com", "/api/location/search/?query=" + city]
-      .timeout(Duration.ofSeconds(5).toMillis())
+
+    return webClient[url, "${queryLocation}$city"]
+      .timeout(timeoutInSec)
       .rxSend()
       .map { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonArray() }
       .map { j: JsonArray ->
         j.getJsonObject(0).getInteger("woeid")
       }
       .flatMap { woeid: Int ->
-        webClient["www.metaweather.com", "/api/location/$woeid"].timeout(
-          Duration.ofSeconds(5).toMillis()
-        ).rxSend()
+        webClient[url, "${queryWeather}$woeid"]
+          .timeout(timeoutInSec)
+          .rxSend()
       }
       .map { r: HttpResponse<Buffer> ->
         r.bodyAsJsonObject()

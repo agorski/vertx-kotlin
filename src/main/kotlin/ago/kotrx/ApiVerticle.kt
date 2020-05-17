@@ -5,6 +5,7 @@ import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServerOptions
+import io.vertx.core.json.JsonObject
 import io.vertx.reactivex.core.AbstractVerticle
 import io.vertx.reactivex.ext.web.Router
 import io.vertx.reactivex.ext.web.RoutingContext
@@ -14,6 +15,7 @@ import org.koin.core.inject
 
 class ApiVerticle() : AbstractVerticle(), KoinComponent {
   private val weather by inject<Weather>()
+  private val config by inject<JsonObject>()
 
   private fun controller(subRouters: Map<String, Router>): Router {
     val router = Router.router(vertx)
@@ -40,7 +42,7 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
     vertx
       .createHttpServer(options)
       .requestHandler(controller(routers))
-      .rxListen(8888)
+      .rxListen(config.getInteger("port"))
       .ignoreElement()
       .subscribe(startPromise::complete, startPromise::fail)
   }

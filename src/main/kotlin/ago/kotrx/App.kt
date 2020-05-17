@@ -4,8 +4,12 @@ package ago.kotrx
 
 import ago.kotrx.weather.Weather
 import ago.kotrx.weather.WeatherClient
+import io.vertx.config.ConfigRetrieverOptions
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.core.json.get
+import io.vertx.reactivex.config.ConfigRetriever
 import io.vertx.reactivex.core.Vertx
 import io.vertx.reactivex.ext.web.client.WebClient
 import org.koin.core.context.startKoin
@@ -15,6 +19,15 @@ import org.koin.dsl.module
 
 fun main(args: Array<String>) {
   val vertx: Vertx = Vertx.vertx()
+  val file =
+    ConfigStoreOptions()
+      .setType("file")
+      .setFormat("yaml")
+      .setConfig(JsonObject().put("path", "application.yaml"))
+
+  val config:JsonObject = ConfigRetriever.create(vertx, ConfigRetrieverOptions().addStore(file)).rxGetConfig().blockingGet()
+  println("> server port ${config.getInteger("port")}")
+
   startKoin {
     printLogger(Level.INFO)
     // declare properties from given map
@@ -25,13 +38,12 @@ fun main(args: Array<String>) {
     // load properties from environment
     environmentProperties()
     modules(module {
-      single { WeatherClient(WebClient.create(vertx)) }
+      single { WeatherClient(WebClient.create(vertx), config) }
       single { Weather(get(), vertx) }
+      single { config }
     })
   }
 
-  val config = JsonObject()
-    .put("version", "1")
   val options = DeploymentOptions()
     .setConfig(config)
 
