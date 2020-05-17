@@ -12,8 +12,14 @@ import io.vertx.reactivex.ext.web.RoutingContext
 import io.vertx.reactivex.ext.web.handler.BodyHandler
 import org.koin.core.KoinComponent
 import org.koin.core.inject
+import org.slf4j.LoggerFactory
 
 class ApiVerticle() : AbstractVerticle(), KoinComponent {
+
+  companion object {
+    private val logger = LoggerFactory.getLogger(ApiVerticle::class.java)
+  }
+
   private val weather by inject<Weather>()
   private val config by inject<JsonObject>()
 
@@ -39,12 +45,20 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
     )
     val options = HttpServerOptions()
       .setLogActivity(true)
+    val port = config.getInteger("port")
     vertx
       .createHttpServer(options)
       .requestHandler(controller(routers))
-      .rxListen(config.getInteger("port"))
+      .rxListen(port)
       .ignoreElement()
-      .subscribe(startPromise::complete, startPromise::fail)
+      .subscribe(
+        {
+          startPromise.complete()
+          logger.info("web server started on port $port")
+        },
+        startPromise::fail
+      )
+
   }
 
   private fun defaultEndpoint(routingContext: RoutingContext) {

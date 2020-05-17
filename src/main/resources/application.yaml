@@ -1,7 +1,7 @@
 test: "test-config-works"
 port: 8888
 api_weather:
-  timeout: 5
+  timeoutMs: 5000
   url: "www.metaweather.com"
   q_location: "/api/location/search/?query="
   q_weather: "/api/location/"

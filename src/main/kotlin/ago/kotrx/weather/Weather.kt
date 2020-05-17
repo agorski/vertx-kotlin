@@ -39,7 +39,7 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
 class WeatherClient(private val webClient: WebClient, private val config: JsonObject) {
   private val configApi = config.getJsonObject("api_weather")
   private val url = configApi.getString("url")
-  private val timeoutInSec = Duration.ofSeconds(configApi.getLong("timeout")).toMillis()
+  private val timeout = Duration.ofMillis(configApi.getLong("timeoutMs")).toMillis()
   private val queryLocation = configApi.getString("q_location")
   private val queryWeather = configApi.getString("q_weather")
 
@@ -47,7 +47,7 @@ class WeatherClient(private val webClient: WebClient, private val config: JsonOb
   fun weatherForCity(city: String): Single<JsonObject> {
 
     return webClient[url, "${queryLocation}$city"]
-      .timeout(timeoutInSec)
+      .timeout(timeout)
       .rxSend()
       .map { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonArray() }
       .map { j: JsonArray ->
@@ -55,7 +55,7 @@ class WeatherClient(private val webClient: WebClient, private val config: JsonOb
       }
       .flatMap { woeid: Int ->
         webClient[url, "${queryWeather}$woeid"]
-          .timeout(timeoutInSec)
+          .timeout(timeout)
           .rxSend()
       }
       .map { r: HttpResponse<Buffer> ->

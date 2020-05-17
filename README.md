@@ -3,14 +3,14 @@ Sample reactive vert.x app with kotlin and RxJava2.
 # Technology
 |  |  |
 | --- | --- |
-| language | [kotlin](https://kotlinlang.org/) |
-| reactive | [RxJava2](https://github.com/ReactiveX/RxJava) |
-| DI | [koin](https://github.com/InsertKoinIO/koin/) |
-| tool-kit | [vert.x](https://vertx.io/) |
-| config | [vertx-config](https://vertx.io/docs/vertx-config/kotlin/) |
+| language  | [kotlin](https://kotlinlang.org/) |
+| reactive  | [RxJava2](https://github.com/ReactiveX/RxJava) |
+| DI        | [koin](https://github.com/InsertKoinIO/koin/) |
+| logging   | [logback](https://github.com/InsertKoinIO/koin/blob/master/koin-projects/docs/reference/koin-core/logging.md) |
+| tool-kit  | [vert.x](https://vertx.io/) |
+| config    | [vertx-config](https://vertx.io/docs/vertx-config/kotlin/) |
 
 ### To do:
-- logger
 - test
 - swagger
 
