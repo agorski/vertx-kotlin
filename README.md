@@ -13,6 +13,7 @@ Sample reactive vert.x app with kotlin and RxJava2.
 ### To do:
 - test
 - swagger
+- (https://piotrminkowski.com/tag/configuration/)
 
 # Run server
 

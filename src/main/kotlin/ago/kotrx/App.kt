@@ -48,7 +48,12 @@ fun main(args: Array<String>) {
   val options = DeploymentOptions()
     .setConfig(config)
 
-  vertx.deployVerticle(ApiVerticle(), options)
+  vertx
+    .rxDeployVerticle(ApiVerticle(), options)
+    .subscribe(
+      {},
+      { e -> logger.error("api verticle failed to start: ${e.message}", e) })
+  //Observable.zip(apiVerticle) when more verticles, wait for all, close in case of error
 }
 
 
