@@ -58,7 +58,6 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
         },
         startPromise::fail
       )
-
   }
 
   private fun defaultEndpoint(routingContext: RoutingContext) {

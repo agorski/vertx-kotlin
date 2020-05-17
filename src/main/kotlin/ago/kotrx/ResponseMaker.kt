@@ -17,15 +17,20 @@ object ResponseMaker {
       ?: internalError(context, "invalid_status")
   }
 
-  private fun <T> ok(context: RoutingContext, content: T?) {
-    if (content != null) {
-      context.response().setStatusCode(200)
-        .putHeader("content-type", "application/json; charset=utf-8")
-        .end(Json.encodePrettily(content!!))
+  private fun <T> ok(context: RoutingContext, maybeContent: T?) {
+    maybeContent?.let { content ->
+      if (content == Unit) {
+        notFound(context)
+      } else {
+        context.response().setStatusCode(200)
+          .putHeader("content-type", "application/json; charset=utf-8")
+          .end(Json.encodePrettily(content))
+      }
+    } ?: notFound(context)
+  }
 
-    } else {
-      context.response().setStatusCode(404).end()
-    }
+  private fun notFound(context: RoutingContext) {
+    context.response().setStatusCode(404).end()
   }
 
   private fun internalError(
