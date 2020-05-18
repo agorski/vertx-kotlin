@@ -3,6 +3,7 @@ port: 8888
 api_weather:
   timeoutMs: 5000
   url: "www.metaweather.com"
+  port: 80
   q_location: "/api/location/search/?query="
   q_weather: "/api/location/"
   q_health_check: "/static/img/weather/png/64/c.png"

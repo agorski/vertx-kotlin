@@ -43,6 +43,7 @@ dependencies {
   implementation "org.slf4j:jcl-over-slf4j:$jclOverSlf4jVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
   // Testing
+  testImplementation "com.squareup.okhttp3:mockwebserver:4.7.0"
   testImplementation "org.mockito:mockito-core:3.3.3"
   testImplementation "org.mockito:mockito-inline:3.3.3"
   testImplementation "io.vertx:vertx-junit5:$vertxVersion"

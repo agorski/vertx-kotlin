@@ -2,10 +2,9 @@
 
 package ago.kotrx
 
+import ago.kotrx.ConfigSupport.configRetrieverOptions
 import ago.kotrx.weather.Weather
 import ago.kotrx.weather.WeatherClient
-import io.vertx.config.ConfigRetrieverOptions
-import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
@@ -25,14 +24,9 @@ fun main(args: Array<String>) {
   val logger = LoggerFactory.getLogger("App")
 
   val vertx: Vertx = Vertx.vertx()
-  val file =
-    ConfigStoreOptions()
-      .setType("file")
-      .setFormat("yaml")
-      .setConfig(JsonObject().put("path", "application.yaml"))
 
   val config: JsonObject =
-    ConfigRetriever.create(vertx, ConfigRetrieverOptions().addStore(file)).rxGetConfig().blockingGet()
+    ConfigRetriever.create(vertx, configRetrieverOptions).rxGetConfig().blockingGet()
   logger.debug(Json.encodePrettily(config))
 
   val healthChecks = HealthChecks.create(vertx)

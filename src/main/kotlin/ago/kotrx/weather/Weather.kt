@@ -37,7 +37,6 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
   }
 }
 
-
 class WeatherClient(
   private val webClient: WebClient,
   config: JsonObject,
@@ -45,6 +44,7 @@ class WeatherClient(
 ) {
   private val configApi = config.getJsonObject("api_weather")
   private val url = configApi.getString("url")
+  private val port = configApi.getInteger("port")
   private val timeout = Duration.ofMillis(configApi.getLong("timeoutMs")).toMillis()
   private val queryLocation = configApi.getString("q_location")
   private val queryWeather = configApi.getString("q_weather")
@@ -58,7 +58,7 @@ class WeatherClient(
     healthChecks.register(
       "WeatherClient"
     ) { future ->
-      webClient[url, queryHealthCheck]
+      webClient[port, url, queryHealthCheck]
         .timeout(timeout)
         .rxSend().subscribe(
           { r ->
@@ -75,16 +75,17 @@ class WeatherClient(
   }
 
   fun weatherForCity(city: String): Single<JsonObject> {
-
-    return webClient[url, "${queryLocation}$city"]
+    return webClient[port, url, "${queryLocation}$city"]
       .timeout(timeout)
       .rxSend()
-      .map { obj: HttpResponse<Buffer?> -> obj.bodyAsJsonArray() }
+      .map { obj: HttpResponse<Buffer?> ->
+        obj.bodyAsJsonArray()
+      }
       .map { j: JsonArray ->
         j.getJsonObject(0).getInteger("woeid")
       }
       .flatMap { woeid: Int ->
-        webClient[url, "${queryWeather}$woeid"]
+        webClient[port, url, "${queryWeather}$woeid"]
           .timeout(timeout)
           .rxSend()
       }
