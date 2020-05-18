@@ -4,7 +4,6 @@ import io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpHeaderValues.APPLICATION_JSON
 import io.netty.handler.codec.http.HttpHeaderValues.TEXT_PLAIN
-import io.reactivex.Single
 import io.vertx.core.MultiMap
 import io.vertx.core.json.Json
 import io.vertx.reactivex.core.http.HttpServerResponse
@@ -20,18 +19,7 @@ object ResponseMaker {
   val textHeaders: MultiMap = MultiMap.caseInsensitiveMultiMap()
     .add(CONTENT_TYPE, "$TEXT_PLAIN; ${HttpHeaderValues.CHARSET}=utf-8")
 
-  fun <T> sendResponse(
-    context: RoutingContext,
-    asyncResult: Single<T>,
-    headers: MultiMap = jsonHeaders
-  ) {
-    asyncResult.subscribe(
-      { ok(context, it, headers) },
-      { internalError(context, it) }
-    )
-  }
-
-  private fun <T> ok(context: RoutingContext, maybeContent: T?, headers: MultiMap) {
+  fun <T> ok(context: RoutingContext, maybeContent: T?, headers: MultiMap) {
     maybeContent?.let { content ->
       if (content == Unit) {
         notFound(context)
@@ -43,11 +31,11 @@ object ResponseMaker {
     } ?: notFound(context)
   }
 
-  private fun notFound(context: RoutingContext) {
+  fun notFound(context: RoutingContext) {
     context.response().setStatusCode(404).end()
   }
 
-  private fun internalError(
+  fun internalError(
     context: RoutingContext,
     ex: Throwable
   ) {

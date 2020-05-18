@@ -28,11 +28,11 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
   }
 
   private fun weatherForCity(routingContext: RoutingContext) {
-    ResponseMaker.sendResponse(
-      routingContext,
-      weatherClient.weatherForCity(
-        routingContext.request().getParam("city")
-      )
+    weatherClient.weatherForCity(
+      routingContext.request().getParam("city")
+    ).subscribe(
+      { ResponseMaker.ok(routingContext, it, ResponseMaker.jsonHeaders) },
+      { ResponseMaker.internalError(routingContext, it) }
     )
   }
 }
@@ -60,7 +60,9 @@ class WeatherClient(
     ) { future ->
       webClient[port, url, queryHealthCheck]
         .timeout(timeout)
-        .rxSend().subscribe(
+        .rxSend()
+        .subscribeOn(Schedulers.io())
+        .subscribe(
           { r ->
             if (r.statusCode() < 400) future.complete(Status.OK()) else {
               future.complete(Status.KO(JsonObject().put("invalid status code (expected 2xx)", "${r.statusCode()}")))

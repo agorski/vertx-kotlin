@@ -1,9 +1,9 @@
 package ago.kotrx
 
+import ago.kotrx.ResponseMaker.jsonHeaders
+import ago.kotrx.ResponseMaker.ok
 import ago.kotrx.ResponseMaker.textHeaders
 import ago.kotrx.weather.Weather
-import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
@@ -71,23 +71,11 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
   }
 
   private fun pingEndpoint(routingContext: RoutingContext) {
-    ResponseMaker.sendResponse(
-      routingContext,
-      Single.just(""),
-      textHeaders
-    )
+    ok(routingContext, "", textHeaders)
   }
 
   private fun defaultEndpoint(routingContext: RoutingContext) {
-    ResponseMaker.sendResponse(
-      routingContext,
-      Single
-        .just(routingContext.request().absoluteURI())
-        .subscribeOn(Schedulers.io())
-        .map {
-          DefaultResponse()
-        }
-    )
+    ok(routingContext, DefaultResponse(), jsonHeaders)
   }
 }
 
