@@ -9,8 +9,10 @@ import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.healthchecks.Status
 import io.vertx.reactivex.config.ConfigRetriever
 import io.vertx.reactivex.core.Vertx
+import io.vertx.reactivex.ext.healthchecks.HealthChecks
 import io.vertx.reactivex.ext.web.client.WebClient
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -33,14 +35,18 @@ fun main(args: Array<String>) {
     ConfigRetriever.create(vertx, ConfigRetrieverOptions().addStore(file)).rxGetConfig().blockingGet()
   logger.debug(Json.encodePrettily(config))
 
+  val healthChecks = HealthChecks.create(vertx)
+  healthChecks.register("app") { future -> future.complete(Status.OK()) }
+
   startKoin {
     logger(SLF4JLogger(Level.INFO))
     // properties( /* properties map */) // declare properties from given map
     // fileProperties() // load properties from koin.properties file or given file name
     environmentProperties() // load properties from environment
     modules(module {
-      single { WeatherClient(WebClient.create(vertx), config) }
+      single { WeatherClient(WebClient.create(vertx), config, healthChecks) }
       single { Weather(get(), vertx) }
+      single { healthChecks }
       single { config }
     })
   }

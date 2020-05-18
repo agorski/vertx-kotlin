@@ -5,4 +5,5 @@ api_weather:
   url: "www.metaweather.com"
   q_location: "/api/location/search/?query="
   q_weather: "/api/location/"
+  q_health_check: "/static/img/weather/png/64/c.png"
 

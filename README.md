@@ -28,17 +28,12 @@ run server and then execute:
 
 # Request examples
 
-### Default handler
-```
-http "127.0.0.1:8888/"
-```
-
-### Weather for the city
-```
-http "127.0.0.1:8888/weather/berlin"
-
-http "127.0.0.1:8888/weather/paris"
-```
+| endpoint | name| HTTPie|
+| --- | --- | --- |
+| ```/```| default | ```http "127.0.0.1:8888/"``` |
+| ```/ping```| ping | ```http "127.0.0.1:8888/ping"``` |
+| ```/health```| health check | ```http "127.0.0.1:8888/health"``` |
+| ```/weather/:city```| weather for the city | ```http "127.0.0.1:8888/weather/berlin"``` |
 
 # Self contained jar
 build

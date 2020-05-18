@@ -8,6 +8,8 @@ import io.vertx.core.Promise
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.reactivex.core.AbstractVerticle
+import io.vertx.reactivex.ext.healthchecks.HealthCheckHandler
+import io.vertx.reactivex.ext.healthchecks.HealthChecks
 import io.vertx.reactivex.ext.web.Router
 import io.vertx.reactivex.ext.web.RoutingContext
 import io.vertx.reactivex.ext.web.handler.BodyHandler
@@ -19,9 +21,12 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
 
   companion object {
     private val logger = LoggerFactory.getLogger(ApiVerticle::class.java)
+    val endpointPing = "/ping"
+    val endpointHealth = "/health"
   }
 
   private val weather by inject<Weather>()
+  private val healthChecks by inject<HealthChecks>()
   private val config by inject<JsonObject>()
 
   private fun controller(subRouters: Map<String, Router>): Router {
@@ -33,7 +38,10 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
     }
 
     // default handler for other requests
-    router.route("/ping").handler(this::pingEndpoint)
+    router.route(endpointPing).handler(this::pingEndpoint)
+
+    router.get(endpointHealth).handler(HealthCheckHandler.createWithHealthChecks(healthChecks))
+
     router.route("/").handler(this::defaultEndpoint)
     router.route().handler(BodyHandler.create())
 

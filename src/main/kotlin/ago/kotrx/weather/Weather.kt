@@ -5,8 +5,10 @@ import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.healthchecks.Status
 import io.vertx.reactivex.core.Vertx
 import io.vertx.reactivex.core.buffer.Buffer
+import io.vertx.reactivex.ext.healthchecks.HealthChecks
 import io.vertx.reactivex.ext.web.Router
 import io.vertx.reactivex.ext.web.RoutingContext
 import io.vertx.reactivex.ext.web.client.HttpResponse
@@ -36,13 +38,41 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
 }
 
 
-class WeatherClient(private val webClient: WebClient, private val config: JsonObject) {
+class WeatherClient(
+  private val webClient: WebClient,
+  config: JsonObject,
+  private val healthChecks: HealthChecks
+) {
   private val configApi = config.getJsonObject("api_weather")
   private val url = configApi.getString("url")
   private val timeout = Duration.ofMillis(configApi.getLong("timeoutMs")).toMillis()
   private val queryLocation = configApi.getString("q_location")
   private val queryWeather = configApi.getString("q_weather")
+  private val queryHealthCheck = configApi.getString("q_health_check")
 
+  init {
+    registerHealthCheck()
+  }
+
+  private fun registerHealthCheck() {
+    healthChecks.register(
+      "WeatherClient"
+    ) { future ->
+      webClient[url, queryHealthCheck]
+        .timeout(timeout)
+        .rxSend().subscribe(
+          { r ->
+            if (r.statusCode() < 400) future.complete(Status.OK()) else {
+              future.complete(Status.KO(JsonObject().put("invalid status code (expected 2xx)", "${r.statusCode()}")))
+            }
+          },
+          { ex ->
+            future.fail(ex)
+          }
+        )
+
+    }
+  }
 
   fun weatherForCity(city: String): Single<JsonObject> {
 
