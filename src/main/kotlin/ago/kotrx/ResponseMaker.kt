@@ -26,8 +26,8 @@ object ResponseMaker {
     headers: MultiMap = jsonHeaders
   ) {
     asyncResult.subscribe(
-      { r: T -> ok(context, r, headers) },
-      { ex: Throwable -> internalError(context, ex) }
+      { ok(context, it, headers) },
+      { internalError(context, it) }
     )
   }
 
