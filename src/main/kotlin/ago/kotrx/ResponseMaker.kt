@@ -22,14 +22,13 @@ object ResponseMaker {
 
   fun <T> sendResponse(
     context: RoutingContext,
-    asyncResult: Single<T>?,
+    asyncResult: Single<T>,
     headers: MultiMap = jsonHeaders
   ) {
-    asyncResult?.subscribe(
+    asyncResult.subscribe(
       { r: T -> ok(context, r, headers) },
       { ex: Throwable -> internalError(context, ex) }
     )
-      ?: internalError(context, Exception("result is not defined / null"))
   }
 
   private fun <T> ok(context: RoutingContext, maybeContent: T?, headers: MultiMap) {
