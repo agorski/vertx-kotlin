@@ -1,5 +1,6 @@
 package ago.kotrx
 
+import ago.kotrx.ResponseMaker.textHeaders
 import ago.kotrx.weather.Weather
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
@@ -32,6 +33,7 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
     }
 
     // default handler for other requests
+    router.route("/ping").handler(this::pingEndpoint)
     router.route("/").handler(this::defaultEndpoint)
     router.route().handler(BodyHandler.create())
 
@@ -58,6 +60,14 @@ class ApiVerticle() : AbstractVerticle(), KoinComponent {
         },
         startPromise::fail
       )
+  }
+
+  private fun pingEndpoint(routingContext: RoutingContext) {
+    ResponseMaker.sendResponse(
+      routingContext,
+      Single.just(""),
+      textHeaders
+    )
   }
 
   private fun defaultEndpoint(routingContext: RoutingContext) {
