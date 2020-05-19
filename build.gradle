@@ -10,6 +10,7 @@ version = '1.0.0-SNAPSHOT'
 repositories {
   mavenCentral()
   jcenter()
+  maven { url "https://dl.bintray.com/arrow-kt/arrow-kt/" }
 }
 
 ext {
@@ -19,6 +20,7 @@ ext {
   koinVersion = "2.1.5"
   jclOverSlf4jVersion = "1.7.30"
   logbackVersion = "1.2.3"
+  arrowVersion = "0.10.5"
 }
 
 application {
@@ -29,6 +31,7 @@ def watchForChange = 'src/**/*'
 def doOnChange = './gradlew classes'
 
 dependencies {
+  // vert.x
   implementation "io.vertx:vertx-web-client:$vertxVersion"
   implementation "io.vertx:vertx-config-yaml:$vertxVersion"
   implementation "io.vertx:vertx-rx-java2:$vertxVersion"
@@ -37,12 +40,21 @@ dependencies {
   implementation "io.vertx:vertx-circuit-breaker:$vertxVersion"
   implementation "io.vertx:vertx-lang-kotlin-coroutines:$vertxVersion"
   implementation "io.vertx:vertx-lang-kotlin:$vertxVersion"
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+  // arrow
+  implementation "io.arrow-kt:arrow-core:$arrowVersion"
+  implementation "io.arrow-kt:arrow-fx-rx2:$arrowVersion"
+  implementation "io.arrow-kt:arrow-mtl:$arrowVersion"
+  // coin
   implementation "org.koin:koin-core:$koinVersion"
   implementation "org.koin:koin-logger-slf4j:$koinVersion"
+  // logging
   implementation "org.slf4j:jcl-over-slf4j:$jclOverSlf4jVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
+  //
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+  // -------------------------------------------------------------
   // Testing
+  // -------------------------------------------------------------
   testImplementation "com.squareup.okhttp3:mockwebserver:4.7.0"
   testImplementation "org.mockito:mockito-core:3.3.3"
   testImplementation "org.mockito:mockito-inline:3.3.3"

@@ -85,7 +85,7 @@ class WeatherClientTest {
     val weatherClient = WeatherClient(webClient, config, healthChecks)
 
 
-    val weatherForCity = weatherClient.weatherForCity("London").blockingGet()
+    val weatherForCity = weatherClient.weatherForCity("London").blockingFirst()
     Assertions.assertNotNull(weatherForCity)
     testContext.completeNow()
   }

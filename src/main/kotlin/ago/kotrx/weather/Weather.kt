@@ -1,9 +1,17 @@
 package ago.kotrx.weather
 
 import ago.kotrx.ResponseMaker
-import io.reactivex.Single
+import arrow.core.Either
+import arrow.fx.rx2.ForObservableK
+import arrow.fx.rx2.ObservableK
+import arrow.fx.rx2.extensions.observablek.monad.monad
+import arrow.fx.rx2.fix
+import arrow.fx.rx2.k
+import arrow.mtl.EitherT
+import arrow.mtl.extensions.eithert.monad.monad
+import arrow.mtl.value
+import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.Status
 import io.vertx.reactivex.core.Vertx
@@ -28,12 +36,21 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
   }
 
   private fun weatherForCity(routingContext: RoutingContext) {
-    weatherClient.weatherForCity(
-      routingContext.request().getParam("city")
-    ).subscribe(
-      { ResponseMaker.ok(routingContext, it, ResponseMaker.jsonHeaders) },
-      { ResponseMaker.internalError(routingContext, it) }
-    )
+    weatherClient
+      .weatherForCity(routingContext.request().getParam("city"))
+      .subscribe(
+        {
+          when (it) {
+            is Either.Right -> {
+              ResponseMaker.ok(routingContext, it.b, ResponseMaker.jsonHeaders)
+            }
+            is Either.Left -> {
+              ResponseMaker.internalError(routingContext, Error(it.a))
+            }
+          }
+        },
+        { ResponseMaker.internalError(routingContext, it) }
+      )
   }
 }
 
@@ -76,23 +93,28 @@ class WeatherClient(
     }
   }
 
-  fun weatherForCity(city: String): Single<JsonObject> {
-    return webClient[port, url, "${queryLocation}$city"]
-      .timeout(timeout)
-      .rxSend()
-      .map { obj: HttpResponse<Buffer?> ->
-        obj.bodyAsJsonArray()
-      }
-      .map { j: JsonArray ->
-        j.getJsonObject(0).getInteger("woeid")
-      }
-      .flatMap { woeid: Int ->
-        webClient[port, url, "${queryWeather}$woeid"]
-          .timeout(timeout)
-          .rxSend()
-      }
-      .map { r: HttpResponse<Buffer> ->
-        r.bodyAsJsonObject()
-      }.subscribeOn(Schedulers.io())
+  @Suppress("USELESS_CAST", "RemoveExplicitTypeArguments")
+  fun weatherForCity(city: String): Observable<out Either<String, JsonObject>> {
+    return EitherT.monad<String, ForObservableK>(ObservableK.monad()).fx.monad {
+
+      val cityIdByName = !EitherT<String, ForObservableK, Int>(webClient[port, url, "$queryLocation$city"]
+        .timeout(timeout)
+        .rxSend()
+        .map { obj: HttpResponse<Buffer?> ->
+          Either.right(obj.bodyAsJsonArray().getJsonObject(0).getInteger("woeid")) as Either<String, Int>
+        }
+        .toObservable().k()
+      )
+      val weather = !EitherT<String, ForObservableK, JsonObject>(webClient[port, url, "$queryWeather$cityIdByName"]
+        .timeout(timeout)
+        .rxSend()
+        .map {
+          Either.right(it.bodyAsJsonObject()) as Either<String, JsonObject>
+        }
+        .toObservable().k()
+      )
+
+      weather
+    }.value().fix().observable
   }
 }
