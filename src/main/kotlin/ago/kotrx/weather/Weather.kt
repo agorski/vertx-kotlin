@@ -1,16 +1,16 @@
 package ago.kotrx.weather
 
 import ago.kotrx.ResponseMaker
-import ago.kotrx.toEither
+import ago.kotrx.runCatchingEither
+import ago.kotrx.toObservable
+import ago.kotrx.toObservableK
 import arrow.core.Either
+import arrow.core.Option
 import arrow.fx.rx2.ForObservableK
 import arrow.fx.rx2.ObservableK
 import arrow.fx.rx2.extensions.observablek.monad.monad
-import arrow.fx.rx2.fix
-import arrow.fx.rx2.k
 import arrow.mtl.EitherT
 import arrow.mtl.extensions.eithert.monad.monad
-import arrow.mtl.value
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import io.vertx.core.json.JsonObject
@@ -98,30 +98,41 @@ class WeatherClient(
   fun weatherForCity(city: String): Observable<out Either<Throwable, JsonObject>> {
     return EitherT.monad<Throwable, ForObservableK>(ObservableK.monad()).fx.monad {
 
-      val cityIdByName: Int = !EitherT<Throwable, ForObservableK, Int>(webClient[port, url, "$queryLocation$city"]
-        .timeout(timeout)
-        .rxSend()
-        .map { obj: HttpResponse<Buffer?> ->
-          kotlin.runCatching {
-            obj.bodyAsJsonArray().getJsonObject(0).getInteger("woeid")
-          }.toEither()
-        }
-        .toObservable().k()
-      )
-      val weather = !EitherT<Throwable, ForObservableK, JsonObject>(
-        webClient[port, url, "$queryWeather$cityIdByName"]
+      val cityIdByName = !EitherT<Throwable, ForObservableK, Option<Int>>(
+        webClient[port, url, "$queryLocation$city"]
           .timeout(timeout)
           .rxSend()
-          .map {
-            kotlin.runCatching {
-              it.bodyAsJsonObject()
-            }.toEither()
+          .map { obj: HttpResponse<Buffer?> ->
+            runCatchingEither {
+              val bodyAsJsonArray = obj.bodyAsJsonArray()
+              if (bodyAsJsonArray.isEmpty) {
+                Option.empty()
+              } else {
+                Option.just(bodyAsJsonArray.getJsonObject(0).getInteger("woeid"))
+              }
+            }
           }
-          .toObservable().k()
+          .toObservableK()
       )
 
-      weather
-    }.value().fix().observable
+      val weatherForTheCity = cityIdByName.fold(
+        { JsonObject() },// no city id by name
+        {
+          !EitherT<Throwable, ForObservableK, JsonObject>(
+            webClient[port, url, "$queryWeather$it"]
+              .timeout(timeout)
+              .rxSend()
+              .map {
+                runCatchingEither {
+                  it.bodyAsJsonObject()
+                }
+              }.toObservableK()
+          )
+        }
+      )
+
+      weatherForTheCity
+    }.toObservable()
   }
 
 }
