@@ -46,7 +46,7 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
               ResponseMaker.ok(routingContext, it.b, ResponseMaker.jsonHeaders)
             }
             is Either.Left -> {
-              ResponseMaker.internalError(routingContext, Error(it.a))
+              ResponseMaker.internalError(routingContext, it.a)
             }
           }
         },
@@ -95,29 +95,29 @@ class WeatherClient(
   }
 
   @Suppress("USELESS_CAST", "RemoveExplicitTypeArguments")
-  fun weatherForCity(city: String): Observable<out Either<String, JsonObject>> {
-    return EitherT.monad<String, ForObservableK>(ObservableK.monad()).fx.monad {
+  fun weatherForCity(city: String): Observable<out Either<Throwable, JsonObject>> {
+    return EitherT.monad<Throwable, ForObservableK>(ObservableK.monad()).fx.monad {
 
-      val cityIdByName: Int = !EitherT<String, ForObservableK, Int>(webClient[port, url, "$queryLocation$city"]
+      val cityIdByName: Int = !EitherT<Throwable, ForObservableK, Int>(webClient[port, url, "$queryLocation$city"]
         .timeout(timeout)
         .rxSend()
         .map { obj: HttpResponse<Buffer?> ->
           kotlin.runCatching {
             obj.bodyAsJsonArray().getJsonObject(0).getInteger("woeid")
-          }.toEither().mapLeft { e -> e.message!! }
+          }.toEither()
         }
         .toObservable().k()
       )
-      val weather = !EitherT<String, ForObservableK, JsonObject>(
+      val weather = !EitherT<Throwable, ForObservableK, JsonObject>(
         webClient[port, url, "$queryWeather$cityIdByName"]
-        .timeout(timeout)
-        .rxSend()
-        .map {
-          kotlin.runCatching {
-            it.bodyAsJsonObject()
-          }.toEither().mapLeft { e -> e.message!! }
-        }
-        .toObservable().k()
+          .timeout(timeout)
+          .rxSend()
+          .map {
+            kotlin.runCatching {
+              it.bodyAsJsonObject()
+            }.toEither()
+          }
+          .toObservable().k()
       )
 
       weather
