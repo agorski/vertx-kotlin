@@ -5,7 +5,9 @@ import ago.kotrx.runCatchingEither
 import ago.kotrx.toObservable
 import ago.kotrx.toObservableK
 import arrow.core.Either
+import arrow.core.None
 import arrow.core.Option
+import arrow.core.Some
 import arrow.fx.rx2.ForObservableK
 import arrow.fx.rx2.ObservableK
 import arrow.fx.rx2.extensions.observablek.monad.monad
@@ -43,7 +45,10 @@ class Weather(private val weatherClient: WeatherClient, private val vertx: Vertx
         {
           when (it) {
             is Either.Right -> {
-              ResponseMaker.ok(routingContext, it.b, ResponseMaker.jsonHeaders)
+              when (val jsonMaybe = it.b) {
+                is Some -> ResponseMaker.ok(routingContext, jsonMaybe.t, ResponseMaker.jsonHeaders)
+                is None -> ResponseMaker.notFound(routingContext)
+              }
             }
             is Either.Left -> {
               ResponseMaker.internalError(routingContext, it.a)
@@ -95,7 +100,7 @@ class WeatherClient(
   }
 
   @Suppress("USELESS_CAST", "RemoveExplicitTypeArguments")
-  fun weatherForCity(city: String): Observable<out Either<Throwable, JsonObject>> {
+  fun weatherForCity(city: String): Observable<out Either<Throwable, Option<JsonObject>>> {
     return EitherT.monad<Throwable, ForObservableK>(ObservableK.monad()).fx.monad {
 
       val cityIdByName = !EitherT<Throwable, ForObservableK, Option<Int>>(
@@ -116,15 +121,15 @@ class WeatherClient(
       )
 
       val weatherForTheCity = cityIdByName.fold(
-        { JsonObject() },// no city id by name
+        { Option.empty<JsonObject>() },// no city id by name
         {
-          !EitherT<Throwable, ForObservableK, JsonObject>(
+          !EitherT<Throwable, ForObservableK, Option<JsonObject>>(
             webClient[port, url, "$queryWeather$it"]
               .timeout(timeout)
               .rxSend()
               .map {
                 runCatchingEither {
-                  it.bodyAsJsonObject()
+                  Option.fromNullable(it.bodyAsJsonObject())
                 }
               }.toObservableK()
           )
