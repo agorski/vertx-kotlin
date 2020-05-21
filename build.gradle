@@ -42,6 +42,7 @@ dependencies {
   implementation "io.vertx:vertx-lang-kotlin:$vertxVersion"
   // arrow
   implementation "io.arrow-kt:arrow-core:$arrowVersion"
+  implementation "io.arrow-kt:arrow-fx:$arrowVersion"
   implementation "io.arrow-kt:arrow-fx-rx2:$arrowVersion"
   implementation "io.arrow-kt:arrow-mtl:$arrowVersion"
   // coin

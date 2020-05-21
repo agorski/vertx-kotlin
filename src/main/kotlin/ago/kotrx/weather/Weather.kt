@@ -1,6 +1,7 @@
 package ago.kotrx.weather
 
 import ago.kotrx.ResponseMaker
+import ago.kotrx.toEither
 import arrow.core.Either
 import arrow.fx.rx2.ForObservableK
 import arrow.fx.rx2.ObservableK
@@ -97,19 +98,24 @@ class WeatherClient(
   fun weatherForCity(city: String): Observable<out Either<String, JsonObject>> {
     return EitherT.monad<String, ForObservableK>(ObservableK.monad()).fx.monad {
 
-      val cityIdByName = !EitherT<String, ForObservableK, Int>(webClient[port, url, "$queryLocation$city"]
+      val cityIdByName: Int = !EitherT<String, ForObservableK, Int>(webClient[port, url, "$queryLocation$city"]
         .timeout(timeout)
         .rxSend()
         .map { obj: HttpResponse<Buffer?> ->
-          Either.right(obj.bodyAsJsonArray().getJsonObject(0).getInteger("woeid")) as Either<String, Int>
+          kotlin.runCatching {
+            obj.bodyAsJsonArray().getJsonObject(0).getInteger("woeid")
+          }.toEither().mapLeft { e -> e.message!! }
         }
         .toObservable().k()
       )
-      val weather = !EitherT<String, ForObservableK, JsonObject>(webClient[port, url, "$queryWeather$cityIdByName"]
+      val weather = !EitherT<String, ForObservableK, JsonObject>(
+        webClient[port, url, "$queryWeather$cityIdByName"]
         .timeout(timeout)
         .rxSend()
         .map {
-          Either.right(it.bodyAsJsonObject()) as Either<String, JsonObject>
+          kotlin.runCatching {
+            it.bodyAsJsonObject()
+          }.toEither().mapLeft { e -> e.message!! }
         }
         .toObservable().k()
       )
@@ -117,4 +123,5 @@ class WeatherClient(
       weather
     }.value().fix().observable
   }
+
 }
