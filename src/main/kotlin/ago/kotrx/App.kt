@@ -9,6 +9,7 @@ import io.vertx.core.DeploymentOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.healthchecks.Status
+import io.vertx.kotlin.ext.web.client.webClientOptionsOf
 import io.vertx.reactivex.config.ConfigRetriever
 import io.vertx.reactivex.core.Vertx
 import io.vertx.reactivex.ext.healthchecks.HealthChecks
@@ -31,14 +32,14 @@ fun main(args: Array<String>) {
 
   val healthChecks = HealthChecks.create(vertx)
   healthChecks.register("app") { future -> future.complete(Status.OK()) }
-
+  val webClientOptionsOf = webClientOptionsOf(logActivity = false, userAgentEnabled = false)
   startKoin {
     logger(SLF4JLogger(Level.INFO))
     // properties( /* properties map */) // declare properties from given map
     // fileProperties() // load properties from koin.properties file or given file name
     environmentProperties() // load properties from environment
     modules(module {
-      single { WeatherClient(WebClient.create(vertx), config, healthChecks) }
+      single { WeatherClient(WebClient.create(vertx, webClientOptionsOf), config, healthChecks) }
       single { Weather(get(), vertx) }
       single { healthChecks }
       single { config }

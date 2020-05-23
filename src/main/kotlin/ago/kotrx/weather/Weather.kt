@@ -113,7 +113,11 @@ class WeatherClient(
               if (bodyAsJsonArray.isEmpty) {
                 Option.empty()
               } else {
-                Option.just(bodyAsJsonArray.getJsonObject(0).getInteger("woeid"))
+                val firstCityObject = bodyAsJsonArray.getJsonObject(0)
+                if (!firstCityObject.containsKey("woeid")) {
+                  throw Exception("city json does not contain key 'woeid'")
+                }
+                Option.just(firstCityObject.getInteger("woeid"))
               }
             }
           }
