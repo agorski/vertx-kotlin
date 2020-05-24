@@ -107,6 +107,7 @@ class WeatherClient(
         webClient[port, url, "$queryLocation$city"]
           .timeout(timeout)
           .rxSend()
+          .subscribeOn(Schedulers.io())
           .map { obj: HttpResponse<Buffer?> ->
             runCatchingEither {
               val bodyAsJsonArray = obj.bodyAsJsonArray()
@@ -131,6 +132,7 @@ class WeatherClient(
             webClient[port, url, "$queryWeather$it"]
               .timeout(timeout)
               .rxSend()
+              .subscribeOn(Schedulers.io())
               .map {
                 runCatchingEither {
                   Option.fromNullable(it.bodyAsJsonObject())
